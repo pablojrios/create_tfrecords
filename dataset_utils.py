@@ -36,8 +36,9 @@ def bytes_feature(values):
   return tf.train.Feature(bytes_list=tf.train.BytesList(value=[values]))
 
 
-def image_to_tfexample(image_data, image_format, height, width, class_id):
+def image_to_tfexample(image_fileid, image_data, image_format, height, width, class_id):
   return tf.train.Example(features=tf.train.Features(feature={
+      'image/fileid': int64_feature(image_fileid),
       'image/encoded': bytes_feature(image_data),
       'image/format': bytes_feature(image_format),
       'image/class/label': int64_feature(class_id),
@@ -159,12 +160,13 @@ def _get_dataset_filename(dataset_dir, split_name, shard_id, _NUM_SHARDS):
   return os.path.join(dataset_dir, output_filename)
 
 
-def _convert_dataset(split_name, filenames, class_names_to_ids, dataset_dir, _NUM_SHARDS):
+def _convert_dataset(split_name, filenames, fileids, class_names_to_ids, dataset_dir, _NUM_SHARDS):
   """Converts the given filenames to a TFRecord dataset.
 
   Args:
     split_name: The name of the dataset, either 'train' or 'validation'.
     filenames: A list of absolute paths to png or jpg images.
+    fileids: A list of consecutive numbers starting from 1 to map to file names.
     class_names_to_ids: A dictionary from class names (strings) to ids
       (integers).
     dataset_dir: The directory where the converted datasets are stored.
@@ -200,7 +202,7 @@ def _convert_dataset(split_name, filenames, class_names_to_ids, dataset_dir, _NU
             class_name = os.path.basename(os.path.dirname(filenames[i]))
             class_id = class_names_to_ids[class_name]
 
-            example = image_to_tfexample(
+            example = image_to_tfexample(fileids[i],
                 image_data, b'jpg', height, width, class_id)
             tfrecord_writer.write(example.SerializeToString())
 
@@ -220,3 +222,19 @@ def _dataset_exists(dataset_dir, _NUM_SHARDS):
       if not tf.gfile.Exists(tfrecord_filename):
         return False
   return True
+
+
+def write_image_ids_file(photo_filenames, photo_fileids, dataset_dir, filename):
+  """Writes a <fileid, filename> .csv mapping file to store the fileids in TFDataset
+
+  Args:
+    photo_filenames: image filenames.
+    photo_fileids: image filename ids
+    dataset_dir: The directory in which the labels file should be written.
+    filename: The filename where the class names are written.
+  """
+  image_ids_filename = os.path.join(dataset_dir, filename)
+  with tf.gfile.Open(image_ids_filename, 'w') as f:
+    f.write('id,filename\n')
+    for id, filename in zip(photo_fileids, photo_filenames):
+      f.write('%d,%s\n' % (id, filename))

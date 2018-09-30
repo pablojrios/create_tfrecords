@@ -1,7 +1,7 @@
 import random
 import tensorflow as tf
-from dataset_utils import _dataset_exists, _get_filenames_and_classes, write_label_file, _convert_dataset
-import os 
+from dataset_utils import _dataset_exists, _get_filenames_and_classes, write_label_file, _convert_dataset,\
+    write_image_ids_file
 
 #====================================================DEFINE YOUR ARGUMENTS=======================================================================
 flags = tf.app.flags
@@ -20,6 +20,9 @@ flags.DEFINE_integer('random_seed', 0, 'Int: Random seed to use for repeatabilit
 
 FLAGS = flags.FLAGS
 
+IMAGE_IDS_FILENAME = 'image_ids.csv'
+IMAGE_IDS_VALIDATION_FILENAME = 'image_ids_validation.csv'
+
 def main():
 
     #==============================================================CHECKS==========================================================================
@@ -35,6 +38,8 @@ def main():
 
     #Get a list of photo_filenames like ['123.jpg', '456.jpg'...] and a list of sorted class names from parsing the subdirectories.
     photo_filenames, class_names = _get_filenames_and_classes(FLAGS.dataset_dir)
+    # generate fileids to create a <fileid, filename> .csv mapping file to be stored in TFDataset
+    photo_fileids = list(range(1, len(photo_filenames) + 1))
 
     #Refer each of the class name to a specific integer number for predictions later
     class_names_to_ids = dict(zip(class_names, range(len(class_names))))
@@ -47,14 +52,19 @@ def main():
     random.shuffle(photo_filenames)
     training_filenames = photo_filenames[num_validation:]
     validation_filenames = photo_filenames[:num_validation]
+    training_fileids = photo_fileids[num_validation:]
+    validation_fileids = photo_fileids[:num_validation]
 
     # First, convert the training and validation sets.
-    _convert_dataset('train', training_filenames, class_names_to_ids,
+    _convert_dataset('train', training_filenames, training_fileids, class_names_to_ids,
                      dataset_dir = FLAGS.dataset_dir, _NUM_SHARDS = FLAGS.num_shards)
-    
+    write_image_ids_file(training_filenames, training_fileids, FLAGS.dataset_dir, IMAGE_IDS_FILENAME)
+
     if num_validation > 0:
-        _convert_dataset('validation', validation_filenames, class_names_to_ids,
+        _convert_dataset('validation', validation_filenames, validation_fileids, class_names_to_ids,
                          dataset_dir = FLAGS.dataset_dir, _NUM_SHARDS = FLAGS.num_shards)
+        write_image_ids_file(validation_filenames, validation_fileids, FLAGS.dataset_dir, IMAGE_IDS_VALIDATION_FILENAME)
+
 
     # Finally, write the labels file:
     labels_to_class_names = dict(zip(range(len(class_names)), class_names))
