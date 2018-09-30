@@ -2,6 +2,7 @@ import random
 import tensorflow as tf
 from dataset_utils import _dataset_exists, _get_filenames_and_classes, write_label_file, _convert_dataset,\
     write_image_ids_file
+import os
 
 #====================================================DEFINE YOUR ARGUMENTS=======================================================================
 flags = tf.app.flags
