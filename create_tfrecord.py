@@ -21,7 +21,7 @@ flags.DEFINE_integer('random_seed', 0, 'Int: Random seed to use for repeatabilit
 FLAGS = flags.FLAGS
 
 IMAGE_IDS_FILENAME = 'image_ids.csv'
-IMAGE_IDS_VALIDATION_FILENAME = 'image_ids_validation.csv'
+IMAGE_IDS_VALIDATION_TMP_FILENAME = 'image_ids_validation.csv'
 
 def main():
 
@@ -63,7 +63,7 @@ def main():
     if num_validation > 0:
         _convert_dataset('validation', validation_filenames, validation_fileids, class_names_to_ids,
                          dataset_dir = FLAGS.dataset_dir, _NUM_SHARDS = FLAGS.num_shards)
-        write_image_ids_file(validation_filenames, validation_fileids, FLAGS.dataset_dir, IMAGE_IDS_VALIDATION_FILENAME)
+        write_image_ids_file(validation_filenames, validation_fileids, FLAGS.dataset_dir, IMAGE_IDS_VALIDATION_TMP_FILENAME)
 
 
     # Finally, write the labels file:
