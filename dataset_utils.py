@@ -3,8 +3,6 @@ import os
 import sys
 import tensorflow as tf
 
-slim = tf.contrib.slim
-
 #State the labels filename
 LABELS_FILENAME = 'labels.txt'
 DIMENSIONS_FILENAME = 'dimensions.txt'

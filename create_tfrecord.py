@@ -47,6 +47,7 @@ def main():
     #Find the number of validation examples we need
     num_validation = int(FLAGS.validation_size * len(photo_filenames))
 
+    print(f'\nrandom seed partition = {FLAGS.random_seed}')
     # Divide the training datasets into train and test:
     random.seed(FLAGS.random_seed)
     random.shuffle(photo_filenames)
